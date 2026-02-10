@@ -2,6 +2,8 @@
 - name: append motd message
   become: false
   ansible.builtin.copy:
-    src: "motd_file"
-    dest: "/etc/motd.d/{{ motd_file }}"
-    mode: "0644"
+    src: 'motd_file'
+    dest: '/etc/motd.d/{{ motd_file }}'
+    mode: '0644'
+  tags:
+    - install

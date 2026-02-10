@@ -7,6 +7,8 @@
     create_home: true
     shell: '{{ shell_path }}'
   register: user_generated
+  tags:
+    - install
 
 - name: 'add user {{ username }} to groups as defined'
   become: true
@@ -15,10 +17,14 @@
     groups: '{{ systemgroups }}'
   when:
     systemgroups is defined
+  tags:
+    - install
 
 - name: 'enable linger for user {{ username }}'
   become: true
   ansible.builtin.command: 'loginctl enable-linger {{ username }}'
+  tags:
+    - install
 
 - name: 'copy ssh key to target host for user {{ username }}'
   become: true
@@ -29,6 +35,8 @@
     state: present
     key: '{{ lookup("file", ssh_pubkey) }}'
   when: user_generated.changed
+  tags:
+    - install
 
 - name: 'configure {{ shell }} dotfiles for user {{ username }}: clone repo'
   become: true
@@ -40,6 +48,8 @@
     recursive: true
     update: true
   when: user_generated.changed
+  tags:
+    - install
 
 - name: 'configure {{ shell }} dotfiles for user {{ username }}: create softlink'
   become: true
@@ -50,6 +60,8 @@
     dest: '/home/{{ username }}/.{{ shell_config_filename }}'
     state: link
   when: user_generated.changed
+  tags:
+    - install
 
 - name: 'generate ssh host config for service_user {{ username }}'
   become: true
@@ -61,6 +73,8 @@
     mode: '0644'
   when: 
     - user_generated.changed
+  tags:
+    - install
 
 - name: 'fetch generated ssh host config to localhost'
   become: true
@@ -72,3 +86,5 @@
     flat: true
   when:
     - user_generated.changed
+  tags:
+    - install

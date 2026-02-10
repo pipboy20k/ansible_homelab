@@ -1,56 +1,66 @@
 ---
-- name: "create {{ container_path }}"
+- name: 'create {{ container_path }}'
   become: true
   ansible.builtin.file:
-    path: "{{ container_path }}"
+    path: '{{ container_path }}'
     state: directory
-    mode: "0755"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    mode: '0755'
+    owner: '{{ username }}'
+    group: '{{ username }}'
+  tags:
+    - install
 
-- name: "Place quadlet templates for user {{ username }}"
+- name: 'Place quadlet templates for user {{ username }}'
   become: true
   ansible.builtin.template:
     src: container.j2
-    dest: "{{ container_path }}/{{ container.filename }}"
-    mode: "0644"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-  loop: "{{ containers }}"
+    dest: '{{ container_path }}/{{ container.filename }}'
+    mode: '0644'
+    owner: '{{ username }}'
+    group: '{{ username }}'
+  loop: '{{ containers }}'
   loop_control:
     loop_var: container
+  tags:
+    - install
 
-- name: "ensure /home/{{ username }}/ and everything below belongs to {{ username }}"
+- name: 'ensure /home/{{ username }}/ and everything below belongs to {{ username }}'
   become: true
   ansible.builtin.file:
-    path: "/home/{{ username }}/"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    path: '/home/{{ username }}/'
+    owner: '{{ username }}'
+    group: '{{ username }}'
     recurse: true
+  tags:
+    - install
 
-- name: "run daemon-reload"
+- name: 'run daemon-reload'
   become: true
-  become_user: "{{ username }}"
+  become_user: '{{ username }}'
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ userid }}"
-    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ userid }}/bus"
+    XDG_RUNTIME_DIR: '/run/user/{{ userid }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ userid }}/bus'
   ansible.builtin.systemd_service:
-    scope: "user"
+    scope: 'user'
     daemon_reload: true
+  tags:
+    - start
 
-- name: "configure systemd to run container(s)"
+- name: 'configure systemd to run container(s)'
   become: true
-  become_user: "{{ username }}"
+  become_user: '{{ username }}'
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ userid }}"
-    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ userid }}/bus"
+    XDG_RUNTIME_DIR: '/run/user/{{ userid }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ userid }}/bus'
   ansible.builtin.systemd_service:
     scope: user
     daemon_reload: true
     enabled: true
     state: started
-    name: "{{ container.name }}"
-  loop: "{{ containers }}"
+    name: '{{ container.name }}'
+  loop: '{{ containers }}'
   loop_control:
     loop_var: container
+  tags:
+    - start
 

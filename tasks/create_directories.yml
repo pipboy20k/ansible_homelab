@@ -1,40 +1,46 @@
 ---
-## will work for defaults.yml without containers being defined because of "default([])"
-- name: "create directories for user {{ username }}"
+## will work for defaults.yml without containers being defined because of 'default([])'
+- name: 'create directories for user {{ username }}'
   become: true
   ansible.builtin.file:
-    path: "{{ item.1.host | replace('%h', '/home/' ~ username) }}"
+    path: '{{ item.1.host | replace('%h', '/home/' ~ username) }}'
     state: directory
-    mode: "0755"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-  loop: "{{ containers | default([]) | subelements('volumes', skip_missing=True) }}"
+    mode: '0755'
+    owner: '{{ username }}'
+    group: '{{ username }}'
+  loop: '{{ containers | default([]) | subelements('volumes', skip_missing=True) }}'
+  tags:
+    - install
 
-## will work for defaults.yml without containers being defined because of "default([])"
-- name: "assign default ACL for directories outside of /home/{{ username }}"
+## will work for defaults.yml without containers being defined because of 'default([])'
+- name: 'assign default ACL for directories outside of /home/{{ username }}'
   become: true
   ansible.posix.acl:
-    path: "{{ item.1.host }}"
-    entity: "{{ username }}"
+    path: '{{ item.1.host }}'
+    entity: '{{ username }}'
     etype: user
-    permissions: "{{ item.1.permissions }}"
+    permissions: '{{ item.1.permissions }}'
     state: present
     recurse: yes
     default: yes
-  loop: "{{ containers | default([]) | subelements('volumes', skip_missing=True) }}"
+  loop: '{{ containers | default([]) | subelements('volumes', skip_missing=True) }}'
   when:
-    - "'%h' not in item.1.host"
+    - '"%h" not in item.1.host'
+  tags:
+    - install
 
-## will work for defaults.yml without containers being defined because of "default([])"
-- name: "assign current ACL for directories outside of /home/{{ username }}"
+## will work for defaults.yml without containers being defined because of 'default([])'
+- name: 'assign current ACL for directories outside of /home/{{ username }}'
   become: true
   ansible.posix.acl:
-    path: "{{ item.1.host }}"
-    entity: "{{ username }}"
+    path: '{{ item.1.host }}'
+    entity: '{{ username }}'
     etype: user
-    permissions: "{{ item.1.permissions }}"
+    permissions: '{{ item.1.permissions }}'
     state: present
     recurse: yes
-  loop: "{{ containers | default([]) | subelements('volumes', skip_missing=True) }}"
+  loop: '{{ containers | default([]) | subelements('volumes', skip_missing=True) }}'
   when:
-    - "'%h' not in item.1.host"
+    - '"%h" not in item.1.host'
+  tags:
+    - install

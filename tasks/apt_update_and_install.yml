@@ -3,13 +3,19 @@
   become: true
   apt:
     update_cache: true
-    upgrade: "yes"
+    upgrade: 'yes'
+  tags:
+    - apt
+    - install
 
 - name: install essential packages
   become: true
   package:
-    name: "{{ packages }}"
+    name: '{{ packages }}'
     state: latest
   when:
     - packages is defined
     - packages | length > 0
+  tags:
+    - apt
+    - install
