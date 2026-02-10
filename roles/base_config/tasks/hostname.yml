@@ -1,0 +1,15 @@
+---
+- name: "set hostname to {{ inventory_hostname }}"
+  become: true
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: "update /etc/hosts"
+  become: true
+  ansible.builtin.template:
+    src: templates/hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+

@@ -1,0 +1,9 @@
+---
+- include_tasks: hostname.yml
+- include_tasks: ../../tasks/apt_update_and_install.yml
+- include_tasks: setup_main_network_user.yml
+- include_tasks: root_user.yml
+- include_tasks: ansible_user.yml
+- include_tasks: ssh.yml
+- include_tasks: motd.yml
+- include_tasks: ../../tasks/append_to_motd.yml

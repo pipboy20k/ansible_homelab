@@ -1,0 +1,13 @@
+motd_file: '000_base_config.txt'
+packages:
+  - podman
+  - cockpit
+  - cockpit-podman
+  - crun
+  - htop
+  - btop
+  - zsh
+  - git
+  - vim
+  - hyfetch
+  - acl

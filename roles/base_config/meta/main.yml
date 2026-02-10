@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  role_name: base_config
+  author: Sebastian Busse <s.busse@mailbox.org>
+  description: "prepares remote machines for further work: sets login shell, configures ssh, ..."
+  license: license (BSD)
+  platforms:
+    - name: debian
+      versions:
+        - 13

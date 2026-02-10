@@ -1,0 +1,38 @@
+---
+- name: "copy ssh pubkey to target host for user {{ ansible_ssh_user }}"
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ ansible_ssh_user }}"
+    state: present
+    key: "{{ lookup('file', ssh_pubkey) }}"
+
+- name: disable ssh login via password
+  become: true
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^#PasswordAuthentication yes"
+    line: "PasswordAuthentication no"
+  register: restart_sshd
+
+- name: restart_sshd
+  become: true
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+  when: restart_sshd.changed
+
+- name: "generate ssh host config for {{ inventory_hostname }}"
+  ansible.builtin.template:
+    src: templates/ssh_host_config.j2
+    dest: "/home/{{ ansible_ssh_user }}/ssh_host_config_{{ inventory_hostname }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+    mode: "0644"
+  when: restart_sshd.changed
+
+- name: "copy generated ssh host config to localhost"
+  ansible.builtin.fetch:
+    src: "/home/{{ ansible_ssh_user }}/ssh_host_config_{{ inventory_hostname }}"
+    dest: "~/.ssh/config.d/"
+    flat: yes
+  when: restart_sshd.changed

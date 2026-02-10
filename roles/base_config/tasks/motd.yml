@@ -1,0 +1,16 @@
+---
+- name: place hyfetch in /etc/update-motd.d
+  become: true
+  ansible.builtin.copy:
+    src: '100-hyfetch'
+    dest: '/etc/update-motd.d/'
+    mode: '0755'
+    owner: root
+
+- name: make /etc/motd.d writable for everyone
+  become: true
+  ansible.builtin.file:
+    path: /etc/motd.d
+    state: directory
+    mode: '0777'
+

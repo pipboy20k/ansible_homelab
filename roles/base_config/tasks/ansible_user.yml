@@ -1,0 +1,34 @@
+---
+- name: "Enable passwordless sudo for user {{ ansible_ssh_user }}"
+  become: true
+  community.general.sudoers:
+    name: "{{ ansible_ssh_user }}-noPW"
+    user: "{{ ansible_ssh_user }}"
+    commands: ALL
+    runas: ALL
+    nopassword: true
+
+- name: "switch login shell to {{ shell }} for user {{ ansible_ssh_user }}"
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_ssh_user }}"
+    shell: "{{ shell_path }}"
+
+- name: "configure {{ shell }} dotfiles for user {{ ansible_ssh_user }}: clone repo"
+  become: false
+  ansible.builtin.git:
+    repo: "{{ shell_dot_repo }}"
+    dest: "/home/{{ ansible_ssh_user }}/.config/{{ shell }}/"
+    recursive: true
+    update: true
+
+- name: "configure {{ shell }} dotfiles for user {{ ansible_ssh_user }}: create softlink"
+  become: false
+  ansible.builtin.file:
+    src: "/home/{{ ansible_ssh_user }}/.config/{{ shell }}/{{ shell_config_filename }}"
+    dest: "/home/{{ ansible_ssh_user }}/.{{ shell_config_filename }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+    state: link
+ 
+
