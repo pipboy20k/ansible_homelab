@@ -1,0 +1,26 @@
+[Unit]
+Description={{ container.description }}
+
+[Container]
+ContainerName={{ container.name }}
+Image={{ container.image }}
+{% for env in container.environment_options | default([])%}
+Environment={{ env.name }}:{{ env.option }}
+{% endfor %}
+{% for port in container.ports | default([])%}
+PublishPort={{ port.host }}:{{ port.container }}
+{% endfor %}
+{% for vol in container.volumes | default([])%}
+Volume={{ vol.host }}:{{ vol.container }}
+{% endfor %}
+{% for cap in container.capabilities | default([])%}
+Capabilities={{ cap }}
+{% endfor %}
+AutoUpdate=registry
+
+[Service]
+ExecStartPre=/bin/sh -c 'until ping -c1 -W1 8.8.8.8; do sleep 1; done'
+Restart=always
+
+[Install]
+WantedBy=default.target

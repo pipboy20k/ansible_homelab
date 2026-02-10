@@ -1,0 +1,33 @@
+<domain type="kvm">
+  <name>{{ vm.name }}</name>
+  <description>{{ vm.vm_description }}</description>
+  <memory>{{ vm.vm_ram_KiB }}</memory>
+  <vcpu>{{ vm.vm_vcpu_count }}</vcpu>
+  <os firmware="efi">
+    <type arch="x86_64" machine="pc-i440fx-7.2">hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode="host-passthrough"/>
+  <pm>
+    <suspend-to-mem enabled="no"/>
+    <suspend-to-disk enabled="no"/>
+  </pm>
+  <devices>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2"/>
+      <source file='{{ vm.image_local_path }}{{ vm.image_name }}'/>
+      <target dev="sda" bus="sata"/>
+    </disk>
+    <interface type="bridge">
+      <source bridge="br0"/>
+      <mac address="{{ vm.vm_mac_address }}"/>
+      <model type="e1000"/>
+    </interface>
+    <console type="pty"/>
+  </devices>
+</domain>
+

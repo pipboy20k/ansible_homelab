@@ -1,0 +1,21 @@
+---
+- name: 'download vm image'
+  become: true
+  become_user: '{{ username }}'
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ userid }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ userid }}/bus'
+  ansible.builtin.get_url:
+    url: '{{ item.image_online_src }}'
+    dest: '{{ item.image_local_path }}'
+  loop: "{{ virutal_machines }}"
+
+## ToDo: for now, only xz archives are supported
+- name: 'unzip image'
+  become: true
+  become_user: '{{ username }}'
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ userid }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ userid }}/bus'
+  ansible.builtin.command:
+    cmd: 'xz -d {{ item.image_local_path }}{{ item.image_name }}.{{ item.image_archive_suffix }}'

@@ -1,0 +1,77 @@
+- name: "create user {{ username }}"
+  become: yes
+  ansible.builtin.user:
+    name: "{{ username }}"
+    uid: "{{ userid }}"
+    home:  "/home/{{ username }}"
+    create_home: true
+    shell: "{{ shell_path }}"
+  register: user_generated
+
+- name: "add {{ username }} to groups "
+  become: yes
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: '{{ systemgroups }}'
+  when:
+    systemgroups is defined
+
+- name: "configure {{ shell }} dotfiles for user {{ username }}: clone repo"
+  become: true
+  ansible.builtin.git:
+    repo: "{{ shell_dot_repo }}"
+    dest: "/home/{{ username }}/.config/{{ shell }}/"
+    recursive: true
+    update: true
+  when: user_generated.changed
+
+- name: "configure {{ shell }} dotfiles for user {{ username }}: create softlink"
+  become: true
+  ansible.builtin.file:
+    src: "/home/{{ username }}/.config/{{ shell }}/{{ shell_config_filename }}"
+    dest: "/home/{{ username }}/.{{ shell_config_filename }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    state: link
+  when: user_generated.changed
+
+- name: "enable linger for user {{ username }}"
+  become: true
+  ansible.builtin.command: "loginctl enable-linger {{ username }}"
+    
+- name: "copy ssh key to target host for user {{ username }}"
+  become: yes
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ lookup('file', ssh_pubkey) }}"
+  when: user_generated.changed
+
+- name: "generate ssh host config for service_user {{ username }}"
+  become: true
+  ansible.builtin.template:
+    src: templates/ssh_host_config_service.j2
+    dest: "/home/{{ username }}/ssh_host_config_{{ username }}_on_{{ inventory_hostname }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+  when: 
+    - user_generated.changed
+
+- name: "fetch generated ssh host config to localhost"
+  become: true
+  ansible.builtin.fetch:
+    src: "/home/{{ username }}/ssh_host_config_{{ username }}_on_{{ inventory_hostname }}"
+    dest: "~/.ssh/config.d/"
+    flat: yes
+  when:
+    - user_generated.changed
+
+- name: "ensure /home/{{ username }}/ and everything below belongs to {{ username }}"
+  become: true
+  ansible.builtin.file:
+    path: "/home/{{ username }}/"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+
