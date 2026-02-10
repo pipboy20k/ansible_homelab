@@ -1,0 +1,19 @@
+all:
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/my_homelab_key
+    ansible_ssh_user: ansible
+
+  children:
+    physical:
+      hosts:
+        server_1:
+          ansible_host: 192.168.0.10
+
+        server_2:
+          ansible_host: 192.168.0.11
+
+    virtual:
+      hosts:
+        podman-host-test:
+          ansible_host: 192.168.0.101
+

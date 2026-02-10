@@ -1,12 +1,16 @@
 # First things first
 
-check group_vars/all/vars.yml and modify to your liking
-note: *main_network_user* is the same user I use *normally* use, it is being created within *base_config* just to make sure that userids are consistent within my network
+Check group_vars/all/vars.yml and modify to your liking.
 
-some things might need a group_vars/all/secrets.yml, try ansible-vault for that (key location in ansible.cfg), create as needed 
+Note: *main_network_user* is the same user I use *normally* use, it is being created within *base_config* just to make sure that userids are consistent within my network.
+
+Also, check inventories/sandbox/example_inventory.yml.
+In case you rename it, change ansible.cfg accordingly.
+
+Some things might need a group_vars/all/secrets.yml, try ansible-vault for that (key location in ansible.cfg), create as needed.
 
 
-# USAGE
+# Usage
 
 
 Prerequisites:
