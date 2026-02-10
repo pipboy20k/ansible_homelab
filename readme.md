@@ -1,6 +1,4 @@
-######################
-# First things first #
-######################
+# First things first
 
 check group_vars/all/vars.yml and modify to your liking
 note: *main_network_user* is the same user I use *normally* use, it is being created within *base_config* just to make sure that userids are consistent within my network
@@ -8,9 +6,7 @@ note: *main_network_user* is the same user I use *normally* use, it is being cre
 some things might need a group_vars/all/secrets.yml, try ansible-vault for that (key location in ansible.cfg), create as needed 
 
 
-#########
-# USAGE #
-#########
+# USAGE
 
 
 Prerequisites:
