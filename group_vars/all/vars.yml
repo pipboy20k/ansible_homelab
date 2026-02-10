@@ -1,0 +1,40 @@
+#####################
+# PERSONAL SETTINGS #
+#####################
+
+main_network_user: pip
+environment_TZ: Europe/Berlin
+
+shell: "zsh"
+shell_path: "/bin/zsh"
+shell_config_filename: "zshrc"
+shell_dot_repo: https://github.com/pipboy20k/zshrc
+shell_dot_files: '/home/{{ username }}/.config/zsh'
+
+ssh_pubkey: '~/.ssh/my_homelab_key.pub'
+
+
+############
+# USER IDs #
+############
+
+main_network_user_userid: 1000
+
+unifi_controller_userid:  1101
+
+homeassistant_userid:     1200
+z2m_userid:               1201
+mosquitto_userid:         1202
+
+audiobookshelf_userid:    1301
+jellyfin_userid:          1302
+airsonic_userid:          1303
+
+userid: "{{ lookup('vars', username ~ '_userid') }}"
+
+
+####################
+# GENERAL SETTINGS #
+####################
+
+container_path: '/home/{{ username }}/.config/containers/systemd/'
