@@ -10,6 +10,16 @@
   tags:
     - install
 
+- name: 'enable passwordless sudo for user {{ username }} if defined in vars'
+  become: true
+  community.general.sudoers:
+    name: '{{ username }}-noPW'
+    user: '{{ username }}'
+    commands: ALL
+    runas: ALL
+    nopassword: true
+  when: pwless_sudo | default(false) | bool
+
 - name: 'add user {{ username }} to groups as defined'
   become: true
   ansible.builtin.user:
@@ -20,9 +30,17 @@
   tags:
     - install
 
+- name: 'check linger status for user {{ username }}'
+  become: true
+  ansible.builtin.stat:
+    path: '/var/lib/systemd/linger/{{ username }}'
+  register: linger_result
+  changed_when: false
+
 - name: 'enable linger for user {{ username }}'
   become: true
   ansible.builtin.command: 'loginctl enable-linger {{ username }}'
+  when: not linger_result.stat.exists
   tags:
     - install
 
@@ -34,9 +52,14 @@
     user: '{{ username }}'
     state: present
     key: '{{ lookup("file", ssh_pubkey) }}'
-  when: user_generated.changed
   tags:
     - install
+
+- name: 'check for existence of local clone of {{ shell }} dotfiles fo user {{ username }}'
+  become: true
+  ansible.builtin.stat:
+    path: '/home/{{ username }}/.config/{{ shell }}'
+  register: repo_path
 
 - name: 'configure {{ shell }} dotfiles for user {{ username }}: clone repo'
   become: true
@@ -47,9 +70,21 @@
     dest: '/home/{{ username }}/.config/{{ shell }}/'
     recursive: true
     update: true
-  when: user_generated.changed
+  when: not repo_path.stat.exists
+  register: dotfiles_repo_cloned
   tags:
     - install
+
+- name: 'update {{ shell }} dotfiles for user {{ username }} from repo'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env }}'
+  ansible.builtin.git:
+    repo: '{{ shell_dot_repo }}'
+    dest: '/home/{{ username }}/.config/{{ shell }}/'
+    update: true
+    recursive: true
+  when: repo_path.stat.exists
 
 - name: 'configure {{ shell }} dotfiles for user {{ username }}: create softlink'
   become: true
@@ -59,32 +94,30 @@
     src: '/home/{{ username }}/.config/{{ shell }}/{{ shell_config_filename }}'
     dest: '/home/{{ username }}/.{{ shell_config_filename }}'
     state: link
-  when: user_generated.changed
+  when: dotfiles_repo_cloned.changed
   tags:
     - install
 
-- name: 'generate ssh host config for service_user {{ username }}'
-  become: true
-  become_user: '{{ username }}'
-  environment: '{{ become_env }}'
-  ansible.builtin.template:
-    src: templates/ssh_host_config_service.j2
-    dest: '/home/{{ username }}/ssh_host_config_{{ username }}_on_{{ inventory_hostname }}'
+- name: 'generate / update ssh host config with user {{ username }}'
+  become: false
+  ansible.builtin.blockinfile:
+    path: '/home/{{ ansible_user }}/{{ inventory_hostname }}_ssh_host_config'
+    marker: '# {mark} ANSIBLE MANAGED BLOCK for {{ username }} on {{ inventory_hostname }}'
+    block: |
+      Host {{ username }}_on_{{ inventory_hostname }}
+        HostName {{ ansible_host }}
+        User {{ username }}
+      IdentityFile {{ ssh_key }}
+    create: yes
     mode: '0644'
-  when: 
-    - user_generated.changed
-  tags:
-    - install
+  register: host_config_block
 
 - name: 'fetch generated ssh host config to localhost'
-  become: true
-  become_user: '{{ username }}'
-  environment: '{{ become_env }}'
+  become: false
   ansible.builtin.fetch:
-    src: '/home/{{ username }}/ssh_host_config_{{ username }}_on_{{ inventory_hostname }}'
+    src: '/home/{{ ansible_user }}/{{ inventory_hostname }}_ssh_host_config'
     dest: '~/.ssh/config.d/'
     flat: true
-  when:
-    - user_generated.changed
+  when: host_config_block.changed
   tags:
     - install
