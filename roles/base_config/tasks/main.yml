@@ -1,16 +1,17 @@
 ---
-- include_tasks: hostname.yml
-- include_tasks: ../../tasks/apt_update_and_install.yml
-- include_tasks: ../../tasks/setup_user
+- import_tasks: hostname.yml
+- import_tasks: ../../tasks/apt_update_and_install.yml
+- include_tasks: ../../tasks/setup_user.yml
   vars:
     username: '{{ ansible_user }}'
     userid: '{{ ansible_userid }}'
     pwless_sudo: true
-- include_tasks: ../../tasks/setup_user
+- include_tasks: ../../tasks/setup_user.yml
   vars:
     username: '{{ main_network_user }}'
     userid: '{{ main_network_user_userid }}'
     pwless_sudo: true
 - import_tasks: root_user.yml
-- include_tasks: ssh.yml
+- import_tasks: ssh.yml
+- import_tasks: locales.yml
 - import_tasks: motd.yml
