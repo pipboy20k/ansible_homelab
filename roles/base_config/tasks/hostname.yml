@@ -1,15 +1,35 @@
 ---
-- name: "set hostname to {{ inventory_hostname }}"
+- name: 'set hostname to {{ inventory_hostname }}'
   become: true
   ansible.builtin.hostname:
-    name: "{{ inventory_hostname }}"
+    name: '{{ inventory_hostname }}'
+  tags:
+    - install
 
-- name: "update /etc/hosts"
+- name: 'update /etc/hosts'
   become: true
   ansible.builtin.template:
     src: templates/hosts.j2
     dest: /etc/hosts
     owner: root
     group: root
-    mode: "0644"
+    mode: '0644'
+  tags:
+    - install
+
+- name: 'ensure up-to-dateness of local artifact "hosts"'
+  ansible.builtin.lineinfile:
+    path: '{{ playbook_dir }}/artifacts/hosts'
+    line: '{{ item }}'
+    create: yes
+  loop: '{{ lookup("file", "/etc/hosts").splitlines() }}'
+  delegate_to: localhost
+
+- name: 'update local artifact "hosts"'
+  ansible.builtin.lineinfile:
+    path: '{{ playbook_dir }}/artifacts/hosts'
+    state: present
+    line: "{{ ansible_host }}\t{{ inventory_hostname }}" # double quotes important for \t
+    insertbefore: '# The following lines'
+  delegate_to: localhost
 
