@@ -1,16 +1,18 @@
 ---
-- name: update and upgrade packages
+- name: update and upgrade packages (including autoremove)
   become: true
-  apt:
+  ansible.builtin.apt:
     update_cache: true
-    upgrade: 'yes'
+    cache_valid_time: 3600
+    autoremove: true
+    upgrade: full
   tags:
     - apt
     - install
 
 - name: install essential packages
   become: true
-  package:
+  ansible.builtin.package:
     name: '{{ packages }}'
     state: latest
   when:
