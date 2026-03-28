@@ -2,7 +2,7 @@
 
 Check group_vars/all/vars.yml and modify to your liking.
 
-Note: *main_network_user* is the same user I use *normally* use, it is being created within *base_config* just to make sure that userids are consistent within my network.
+Note: *main_network_user* is the same user I *normally* use, it is being created within *base_config* just to make sure that userids are consistent within my network.
 
 Also, check inventories/sandbox/example_inventory.yml.
 In case you rename it, change ansible.cfg accordingly.
