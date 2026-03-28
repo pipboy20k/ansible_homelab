@@ -9,5 +9,9 @@ packages:
   - zsh
   - git
   - vim
+  - neovim
   - hyfetch
   - acl
+  - locales
+  - python3-cryptography # for generating ssh keys with a specific private_key_format
+  - jq
