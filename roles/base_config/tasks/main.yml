@@ -5,5 +5,4 @@
 - include_tasks: root_user.yml
 - include_tasks: ansible_user.yml
 - include_tasks: ssh.yml
-- include_tasks: motd.yml
-- include_tasks: ../../tasks/append_to_motd.yml
+- import_tasks: motd.yml

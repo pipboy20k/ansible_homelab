@@ -1,0 +1,7 @@
+VM: {{ servicename }} - {{ virtual_machine.description | default('No description provided') }}
+	User: {{ username }}
+	Home: {{ '/home/' ~ username }}
+
+	VM Details:
+	  - mac_address: {{ virtual_machine.vm_mac_address }}
+

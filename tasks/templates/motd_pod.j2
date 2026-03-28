@@ -1,0 +1,15 @@
+Pod: {{ service_pod.name }} - {{ service_pod.description | default('No description provided') }}
+	(Includes: {{ service_pod.containers | map(attribute='name') | join(', ') }})
+	User: {{ username }}
+	Home: {{ '/home/' ~ username }}
+
+	Container Details:
+	{% for container in service_pod.containers %}
+	  - {{ container.name }}: {{ container.description | default('N/A') }} ({{ container.image }}:{{ container.tag }})
+	{% endfor %}
+
+	Published Ports:
+	{% for port in service_pod.publish_ports | default([]) %}
+	  - Host {{ port.bind_ip | default('0.0.0.0') }}:{{ port.host }} -> Container {{ port.container }}
+	{% endfor %}
+

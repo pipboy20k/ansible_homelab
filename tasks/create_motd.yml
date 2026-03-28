@@ -1,0 +1,21 @@
+---
+- name: append motd message (service_pod)
+  become: false
+  ansible.builtin.template:
+    src: motd_pod.j2
+    dest: '/etc/motd.d/{{ servicename }}'
+    mode: '0644'
+  when: service_pod is defined
+  tags:
+    - install
+
+- name: append motd message (virtual_machine)
+  become: false
+  ansible.builtin.template:
+    src: motd_vm.j2
+    dest: '/etc/motd.d/{{ servicename }}'
+    mode: '0644'
+  when: virtual_machine is defined
+  tags:
+    - install
+

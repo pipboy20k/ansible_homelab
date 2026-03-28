@@ -6,6 +6,8 @@
     dest: '/etc/update-motd.d/'
     mode: '0755'
     owner: root
+  tags:
+    - install
 
 - name: make /etc/motd.d writable for everyone
   become: true
@@ -13,4 +15,40 @@
     path: /etc/motd.d
     state: directory
     mode: '0777'
+  tags:
+    - install
+
+- name: check for existence of original message of the day
+  ansible.builtin.stat:
+    path: /etc/motd
+  register: motd_file_status
+  changed_when: false
+
+- name: create backup of original message of the day
+  become: true
+  ansible.builtin.file:
+    path: /etc/motd.bak
+    src: /etc/motd
+    state: hard
+  when: motd_file_status.stat.exists
+  tags:
+    - install
+
+- name: disable original message of the day
+  become: true
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent
+  when: motd_file_status.stat.exists
+  tags:
+    - install
+
+- name: create cowsay motd header
+  become: false
+  ansible.builtin.copy:
+    src: motd_file
+    dest: /etc/motd.d/{{ motd_file }}
+    mode: '0644'
+  tags:
+    - install
 
