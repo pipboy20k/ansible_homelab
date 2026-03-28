@@ -2,16 +2,14 @@
 Description={{ container.description }}
 
 [Container]
+Pod={{ servicename }}.pod
 ContainerName={{ container.name }}
 Image={{ container.image }}
 {% for env in container.environment_options | default([])%}
-Environment={{ env.name }}:{{ env.option }}
-{% endfor %}
-{% for port in container.ports | default([])%}
-PublishPort={{ port.host }}:{{ port.container }}
+Environment={{ env.name }}={{ env.option }}
 {% endfor %}
 {% for vol in container.volumes | default([])%}
-Volume={{ vol.host }}:{{ vol.container }}
+Volume={{ vol.host }}:{{ vol.container }}{{ ':' ~ vol.flags if vol.flags is defined }}
 {% endfor %}
 {% for cap in container.capabilities | default([])%}
 Capabilities={{ cap }}
