@@ -4,6 +4,8 @@
   ansible.builtin.user:
     name: "root"
     shell: "{{ shell_path }}"
+  tags:
+    - install
 
 - name: "configure {{ shell }} dotfiles for root: clone repo"
   become: true
@@ -12,6 +14,8 @@
     dest: "/root/.config/{{ shell }}/"
     recursive: true
     update: true
+  tags:
+    - install
 
 - name: "configure {{ shell }} dotfiles for root: create softlink"
   become: true
@@ -21,3 +25,5 @@
     owner: "root"
     group: "root"
     state: link
+  tags:
+    - install
