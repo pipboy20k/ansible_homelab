@@ -1,0 +1,45 @@
+username: USERNAME
+pwless_sudo: false # OPTIONAL
+servicename: NameOfThePod
+
+motd_file: '001_{servicename}.txt'
+
+service_pod:
+  name: '{servicename}'
+  description: 'what this service does'
+  publish_ports:
+    - host: '{{ lookup("vars", username ~ "_port") }}'
+      container: '8000'
+      bind_ip: '127.0.0.1' # OPTIONAL, this way, only the host interface with the ip 127.0.0.1 can access the published port
+  named_volumes:
+    - name: 'myVolume'
+    - name: 'myOtherVolume'
+  containers:
+    - name: 'someName'
+      description: 'what this container is for within the pod'
+      image: 'docker.io/library/redis'
+      tag: '8'
+      volumes: # OPTIONAL
+        - host: 'myVolume.volume'
+          container: '/usr/src/paperless/consume'
+          flags: 'U,z' # OPTIONAL
+      environment_options: # OPTIONAL
+        - name: 'TZ'
+          option: 'Europe/Berlin'
+      capabilities: # OPTIONAL
+        - 'NET-ADMIN'
+
+#virtual_machine:
+#  name: 'homeassistant'
+#  image_version: '17.0'
+#  image_suffix: 'qcow2'
+#  image_archive_suffix: 'xz' # for now, only xz archives are supported, see ansible_root_folder/tasks/load_vm_image.yml
+#  image_name: 'haos_ova-{{ image_version }}.{{ image_suffix }}'
+#  image_online_src: 'https://github.com/home-assistant/operating-system/releases/download/{{ image_version }}/{{ image_name }}.{{ image_archive_suffix }}'
+#  image_local_path: '/home/{{ username }}'
+#  vm_mac_address: 'ba:54:00:aa:aa:bb'
+#  vm_ram_KiB: 4194304
+#  vm_vcpu_count: 2
+#  vm_description: 'Home Assistant OS'
+#  vm_xml_file: 'haos-vm.xml'
+
