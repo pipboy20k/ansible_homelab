@@ -4,6 +4,8 @@ servicename: NameOfThePod
 
 motd_file: '001_{servicename}.txt'
 
+# for now, the tasks are designed with *EITHER* a service_pod *OR* one or more virtual machines per role. Behaviour if both are defined is untested (and will probably remain so)
+
 service_pod:
   name: '{servicename}'
   description: 'what this service does'
@@ -23,23 +25,23 @@ service_pod:
         - host: 'myVolume.volume'
           container: '/usr/src/paperless/consume'
           flags: 'U,z' # OPTIONAL
-      environment_options: # OPTIONAL
-        - name: 'TZ'
-          option: 'Europe/Berlin'
+      environment_variables: # OPTIONAL
+        - key: 'SOME_OPTION'
+          value: 'the_setting'
       capabilities: # OPTIONAL
         - 'NET-ADMIN'
 
-#virtual_machine:
-#  name: 'homeassistant'
-#  image_version: '17.0'
-#  image_suffix: 'qcow2'
-#  image_archive_suffix: 'xz' # for now, only xz archives are supported, see ansible_root_folder/tasks/load_vm_image.yml
-#  image_name: 'haos_ova-{{ image_version }}.{{ image_suffix }}'
-#  image_online_src: 'https://github.com/home-assistant/operating-system/releases/download/{{ image_version }}/{{ image_name }}.{{ image_archive_suffix }}'
-#  image_local_path: '/home/{{ username }}'
-#  vm_mac_address: 'ba:54:00:aa:aa:bb'
-#  vm_ram_KiB: 4194304
-#  vm_vcpu_count: 2
-#  vm_description: 'Home Assistant OS'
-#  vm_xml_file: 'haos-vm.xml'
+#virtual_machines:
+#  - name: 'homeassistant'
+#    image_version: '17.0'
+#    image_suffix: 'qcow2'
+#    image_archive_suffix: 'xz' # for now, only xz archives are supported, see ansible_root_folder/tasks/load_vm_image.yml
+#    image_name: 'haos_ova-{{ image_version }}.{{ image_suffix }}'
+#    image_online_src: 'https://github.com/home-assistant/operating-system/releases/download/{{ image_version }}/{{ image_name }}.{{ image_archive_suffix }}'
+#    image_local_path: '/home/{{ username }}'
+#    vm_mac_address: 'ba:54:00:aa:aa:bb'
+#    vm_ram_KiB: 4194304
+#    vm_vcpu_count: 2
+#    vm_description: 'Home Assistant OS'
+#    vm_xml_file: 'haos-vm.xml'
 
