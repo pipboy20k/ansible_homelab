@@ -16,7 +16,7 @@
   environment: '{{ become_env}}'
   ansible.builtin.template:
     src: volume.j2
-    dest: '{{ container_path }}/{{ item.name }}.volume'
+    dest: '{{ container_path }}/{{ service_pod.name }}_{{ item.name }}.volume'
     mode: '0644'
   loop: '{{ service_pod.named_volumes }}'
   tags:
@@ -32,7 +32,7 @@
     mode: '0644'
   loop: '{{ service_pod.containers }}'
   loop_control:
-    loop_var: containers
+    loop_var: container
   tags:
     - install
 
@@ -46,7 +46,7 @@
     mode: '0644'
   loop: '{{ service_pod.containers }}'
   loop_control:
-    loop_var: containers
+    loop_var: container
   tags:
     - install
 
