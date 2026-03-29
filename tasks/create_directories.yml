@@ -1,50 +1,141 @@
 ---
-## will work for defaults.yml without containers being defined because of 'default([])'
+vars:
+  volumes_flat: '{{ service_pod.containers | default([]) | subelements("volumes", skip_missing=True) }}'
+
+  # if is_file is true, take dirname; otherwise use full path
+  resolved_path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
+
+  # create cartesian product: each volume combined with [true, false]
+  cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
+
 - name: 'create directories for user {{ username }}'
   become: true
   ansible.builtin.file:
-    # if dir is false, take dirname; otherwise use full path
-    path: >-
-      {%- set raw_path = item.1.host | replace('%h', '/home/' ~ username) -%}
-      {{ (item.1.dir | default(true)) | ternary(raw_path, raw_path | dirname) }}
+    path: '{{ resolved_path }}'
     state: directory
     mode: '0755'
     owner: '{{ username }}'
     group: '{{ username }}'
-  loop: '{{ containers | default([]) | subelements("volumes", skip_missing=True) }}'
-  tags:
-    - install
-      #    path: '{{ item.1.host | replace("%h", "/home/" ~ username) }}'
+  loop: '{{ volumes_flat }}'
+  loop_control:
+    loop_var: volume
+  when: >
+    volume.1.host is match('^/') or
+    volume.1.host is match('^%h/')
+  tags: [install]
 
-## will work for defaults.yml without containers being defined because of 'default([])'
-- name: 'assign default ACL for directories outside of /home/{{ username }}'
+- name: 'assign default and current ACL for directories outside of /home/{{ username }}'
   become: true
   ansible.posix.acl:
-    path: '{{ item.1.host }}'
+    # if is_file is true, take dirname; otherwise use full path
+    path: '{{ resolved_path }}'
     entity: '{{ username }}'
     etype: user
-    permissions: '{{ item.1.permissions }}'
+    permissions: '{{ volume.1.permissions }}'
     state: present
     recurse: yes
-    default: yes
-  loop: '{{ containers | default([]) | subelements("volumes", skip_missing=True) }}'
-  when:
-    - '"%h" not in item.1.host'
-  tags:
-    - install
+    default: '{{ acl_type }}'
+  loop: '{{ cartesian_product }}'
+  loop_control:
+    loop_var: loop_item
+  vars:
+    volume: '{{ loop_item.0 }}'
+    acl_type: '{{ loop_item.1 }}'
+  when: >
+    volume.1.permissions is defined and
+    (
+      volume.1.host is match('^/') or
+      volume.1.host is match('^%h/')
+    )
+  tags: [install]
 
-## will work for defaults.yml without containers being defined because of 'default([])'
-- name: 'assign current ACL for directories outside of /home/{{ username }}'
+- name: 'UNINSTALL: unassign default and current ACL for directories outside of /home/{{ username }}'
   become: true
   ansible.posix.acl:
-    path: '{{ item.1.host }}'
+    # if is_file is true, take dirname; otherwise use full path
+    path: '{{ resolved_path }}'
     entity: '{{ username }}'
     etype: user
-    permissions: '{{ item.1.permissions }}'
-    state: present
+    permissions: '{{ volume.1.permissions }}'
+    state: absent
     recurse: yes
-  loop: '{{ containers | default([]) | subelements("volumes", skip_missing=True) }}'
+    default: '{{ acl_type }}'
+  loop: '{{ cartesian_product }}'
+  loop_control:
+    loop_var: loop_item
+  vars:
+    volume: '{{ loop_item.0 }}'
+    acl_type: '{{ loop_item.1 }}'
+  when: >
+    volume.1.permissions is defined and
+    volume.1.host is match('^/')
+  tags: [never, uninstall]
+
+- name: 'UNINSTALL: check for directories outside of /home/{{ username }} with no ACLs remaining on them, which are NOT nfs-mounts'
+  become: true
+  # shell-command:
+  # set -o pipefail # if one part of the pipe fails, the whole command fails
+  # getfacl --physical --omit-header # get ACLs; --physical: do not follow symbolic links; --omit-header: make grepping easier
+  # grep --invert-match --extended-regexp # get all lines NOT matching any of the following expressions (different expressions divided by |)
+  # ' ## start of single argument
+  # ^ ## the pattern shall match the beginning of the line
+  # ( ## beginning of pattern alternatives
+  # # ## comment, we do not want to consider this
+  # | ## "or"
+  # user:: ## is the ACL entry for the POSIX-owner, we do not want to consider this; a named user (e.g. alice) that is NOT the POSIX-owner would look like "user:alice:"
+  # |group::|other:: ## or group or other; same as with user
+  # |mask:: ## or mask; there is exactly one "mask::" entry whenever there is an extended ACL present, we do not want to consider this
+  # ) ## end of pattern alternatives
+  # ' ## end of argument
+  # | wc --lines ## pipe to wc to count number of returned lines
+  #
+  # safety_check will be an ansible register object with .results being a list of dicts
+  # the list elements will have:
+  # - item: the original volume 'object' ## interesting part: item.volume.1.host ; the path
+  # - skipped: bool ## is set to true when 'when' condition does not match
+  # - stdout: int ## result of wc --lines
+  ansible.builtin.shell: |
+    set -o pipefail
+    # 1. check for remaining ACLs
+    ACL_COUNT=$(getfacl --physical --omit-header "{{ path }}" | grep --invert-match --extended-regexp '^(#|user::|group::|other::|mask::)' | wc --lines)
+
+    # 2. check for NFS mount
+    IS_NFS=$(findmnt --noheadings --output FSTYPE --target "{{ path }}" | grep --extended-regexp '^(nfs|nfs4|cifs)$' | wc --lines )
+
+    # 3. echo both results for registering (stdout = "0|0": may be deleted; "1|0": has 1 ACL remaining, do not delete; "0|1": is a network mount, do not delete)
+    echo "$ACL_COUNT|$IS_NFS"
+  vars:
+    path: '{{ resolved_path }}'
+  register: safety_check
+  failed_when: false
+  changed_when: false
+  loop: '{{ volumes_flat }}'
+  loop_control:
+    loop_var: volume
   when:
-    - '"%h" not in item.1.host'
-  tags:
-    - install
+    - volume.1.host is match('^/')
+    - volume.1.host not in ['/', '/var', '/etc', '/usr', '/sys', '/proc']
+  tags: [never, uninstall]
+
+# BEWARE: this deletes recursively. Network mount protection is implemented and *SHOULD* work
+- name: 'UNINSTALL: remove directories if no other ACLs remain'
+  become: true
+  ansible.builtin.file:
+    path: '{{ resolved_path }}'
+    state: absent
+  loop: '{{ safety_check.results }}'
+  loop_control:
+    loop_var: res
+  vars:
+    volume: '{{ res.volume }}'  # needed for resolved_path
+    split_results: "{{ res.stdout.split('|') if res.stdout is defined else ['-1', '-1'] }}"
+    acl_count: "{{ split_results[0] | trim }}"
+    is_nfs: "{{ split_results[1] | trim }}"
+  when:
+    - not res.skipped | default(false)
+    - acl_count == '0'
+    - is_nfs == '0'
+  tags: [never, uninstall]
+
