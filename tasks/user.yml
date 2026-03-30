@@ -7,8 +7,7 @@
     create_home: true
     shell: '{{ shell_path }}'
   register: user_generated
-  tags:
-    - install
+  tags: [install]
 
 - name: 'enable passwordless sudo for user {{ username }} if defined in vars'
   become: true
@@ -18,7 +17,9 @@
     commands: ALL
     runas: ALL
     nopassword: true
+    state: present
   when: pwless_sudo | default(false) | bool
+  tags: [install]
 
 - name: 'add user {{ username }} to groups as defined'
   become: true
@@ -27,8 +28,7 @@
     groups: '{{ systemgroups }}'
   when:
     systemgroups is defined
-  tags:
-    - install
+  tags: [install]
 
 - name: 'check linger status for user {{ username }}'
   become: true
@@ -41,8 +41,7 @@
   become: true
   ansible.builtin.command: 'loginctl enable-linger {{ username }}'
   when: not linger_result.stat.exists
-  tags:
-    - install
+  tags: [install]
 
 - name: 'copy ssh key to target host for user {{ username }}'
   become: true
@@ -52,14 +51,14 @@
     user: '{{ username }}'
     state: present
     key: '{{ lookup("file", ssh_pubkey) }}'
-  tags:
-    - install
+  tags: [install]
 
 - name: 'check for existence of local clone of {{ shell }} dotfiles fo user {{ username }}'
   become: true
   ansible.builtin.stat:
     path: '/home/{{ username }}/.config/{{ shell }}'
   register: repo_path
+  tags: [install]
 
 - name: 'configure {{ shell }} dotfiles for user {{ username }}: clone repo'
   become: true
@@ -72,8 +71,7 @@
     update: true
   when: not repo_path.stat.exists
   register: dotfiles_repo_cloned
-  tags:
-    - install
+  tags: [install]
 
 - name: 'update {{ shell }} dotfiles for user {{ username }} from repo'
   become: true
@@ -95,8 +93,7 @@
     dest: '/home/{{ username }}/.{{ shell_config_filename }}'
     state: link
   when: dotfiles_repo_cloned.changed
-  tags:
-    - install
+  tags: [install]
 
 - name: 'generate / update ssh host config with user {{ username }}'
   become: false
@@ -110,7 +107,9 @@
       IdentityFile {{ ssh_key }}
     create: yes
     mode: '0644'
+    state: present
   register: host_config_block
+  tags: [install]
 
 - name: 'fetch generated ssh host config to localhost'
   become: false
@@ -119,5 +118,5 @@
     dest: '~/.ssh/config.d/'
     flat: true
   when: host_config_block.changed
-  tags:
-    - install
+  tags: [install]
+
