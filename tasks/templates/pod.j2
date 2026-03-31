@@ -1,5 +1,7 @@
 [Unit]
 Description=pod encapsulating {{ service_pod.name }}
+Requires=network-online.path
+After=network-online.path
 
 [Pod]
 PodName={{ service_pod.name }}-stack

@@ -1,0 +1,15 @@
+---
+- name: copy network-online-flag service
+  become: true
+  ansible.builtin.copy:
+    src: network-online-flag.service
+    dest: /etc/systemd/system/
+
+- name: enable network-online-flag service
+  become: true
+  ansible.builtin.systemd:
+    daemon-reload: true
+    unit: network-online-flag.service
+    state: started
+    enabled: true
+

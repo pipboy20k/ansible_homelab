@@ -1,5 +1,7 @@
 [Unit]
 Description={{ container.description }}
+Requires=network-online.path
+After=network-online.path
 
 [Container]
 Pod={{ servicename }}.pod
@@ -23,7 +25,6 @@ Capabilities={{ cap }}
 AutoUpdate=registry
 
 [Service]
-ExecStartPre=/bin/sh -c 'until ping -c1 -W1 8.8.8.8; do sleep 1; done'
 Restart=always
 
 [Install]

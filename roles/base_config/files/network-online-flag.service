@@ -1,0 +1,14 @@
+[Unit]
+Description=Create network online flag
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/touch /var/run/network-online
+ExecStop=/bin/rm -f /var/run/network-online
+RemainAfterExit=yes
+
+[Install]
+WantedBy=network-online.target
+

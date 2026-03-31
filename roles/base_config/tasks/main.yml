@@ -13,5 +13,6 @@
     pwless_sudo: true
 - import_tasks: root_user.yml
 - import_tasks: ssh.yml
+- import_tasks: network_online_flag_service.yml
 - import_tasks: locales.yml
 - import_tasks: motd.yml
