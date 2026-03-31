@@ -6,8 +6,7 @@
     dest: '/etc/motd.d/{{ servicename }}'
     mode: '0644'
   when: service_pod is defined
-  tags:
-    - install
+  tags: [install]
 
 - name: append motd message (virtual_machine)
   become: false
@@ -16,6 +15,5 @@
     dest: '/etc/motd.d/{{ servicename }}'
     mode: '0644'
   when: virtual_machine is defined
-  tags:
-    - install
+  tags: [install]
 

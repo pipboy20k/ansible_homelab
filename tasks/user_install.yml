@@ -1,3 +1,4 @@
+---
 - name: 'create user {{ username }}'
   become: true
   ansible.builtin.user:
@@ -73,6 +74,7 @@
   register: dotfiles_repo_cloned
   tags: [install]
 
+# unsure, whether this is needed (if only for avoiding 'changed')
 - name: 'update {{ shell }} dotfiles for user {{ username }} from repo'
   become: true
   become_user: '{{ username }}'
@@ -93,6 +95,25 @@
     dest: '/home/{{ username }}/.{{ shell_config_filename }}'
     state: link
   when: dotfiles_repo_cloned.changed
+  tags: [install]
+
+- name: 'copy network-online.path for user {{ username }}'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env }}'
+  ansible.builtin.copy:
+    src: network-online.path
+    dest: '/home/{{ username }}/.config/systemd/user/'
+  tags: [install]
+
+- name: 'enable network-online.path for user {{ username }}'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env }}'
+  ansible.builtin.systemd:
+    daemon_reload: true
+    unit: network-online-path
+    enabled: true
   tags: [install]
 
 - name: 'generate / update ssh host config with user {{ username }}'

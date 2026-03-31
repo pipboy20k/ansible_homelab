@@ -1,0 +1,8 @@
+---
+- name: remove motd message
+  become: false
+  ansible.builtin.file:
+    path: '/etc/motd.d/{{ servicename }}'
+    state: absent
+  tags: [uninstall]
+

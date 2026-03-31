@@ -10,47 +10,6 @@ vars:
   # create cartesian product: each volume combined with [true, false]
   cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
 
-- name: 'create directories for user {{ username }}'
-  become: true
-  ansible.builtin.file:
-    path: '{{ resolved_path }}'
-    state: directory
-    mode: '0755'
-    owner: '{{ username }}'
-    group: '{{ username }}'
-  loop: '{{ volumes_flat }}'
-  loop_control:
-    loop_var: volume
-  when: >
-    volume.1.host is match('^/') or
-    volume.1.host is match('^%h/')
-  tags: [install]
-
-- name: 'assign default and current ACL for directories outside of /home/{{ username }}'
-  become: true
-  ansible.posix.acl:
-    # if is_file is true, take dirname; otherwise use full path
-    path: '{{ resolved_path }}'
-    entity: '{{ username }}'
-    etype: user
-    permissions: '{{ volume.1.permissions }}'
-    state: present
-    recurse: yes
-    default: '{{ acl_type }}'
-  loop: '{{ cartesian_product }}'
-  loop_control:
-    loop_var: loop_item
-  vars:
-    volume: '{{ loop_item.0 }}'
-    acl_type: '{{ loop_item.1 }}'
-  when: >
-    volume.1.permissions is defined and
-    (
-      volume.1.host is match('^/') or
-      volume.1.host is match('^%h/')
-    )
-  tags: [install]
-
 - name: 'UNINSTALL: unassign default and current ACL for directories outside of /home/{{ username }}'
   become: true
   ansible.posix.acl:

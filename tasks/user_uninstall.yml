@@ -1,0 +1,51 @@
+---
+- name: 'remove passwordless sudo for user {{ username }}'
+  become: true
+  community.general.sudoers:
+    name: '{{ username }}-noPW'
+    user: '{{ username }}'
+    commands: ALL
+    runas: ALL
+    nopassword: true
+    state: absent
+  when: pwless_sudo | default(false) | bool
+  tags: [uninstall]
+
+- name: 'check linger status for user {{ username }}'
+  become: true
+  ansible.builtin.stat:
+    path: '/var/lib/systemd/linger/{{ username }}'
+  register: linger_result
+  changed_when: false
+
+- name: 'disable linger for user {{ username }}'
+  become: true
+  ansible.builtin.command: 'loginctl disable-linger {{ username }}'
+  when: linger_result.stat.exists
+  tags: [uninstall]
+
+- name: 'update ssh host config with user {{ username }}'
+  become: false
+  ansible.builtin.blockinfile:
+    path: '/home/{{ ansible_user }}/{{ inventory_hostname }}_ssh_host_config'
+    marker: '# {mark} ANSIBLE MANAGED BLOCK for {{ username }} on {{ inventory_hostname }}'
+    block: |
+      Host {{ username }}_on_{{ inventory_hostname }}
+        HostName {{ ansible_host }}
+        User {{ username }}
+      IdentityFile {{ ssh_key }}
+    create: yes
+    mode: '0644'
+    state: absent
+  register: host_config_block
+  tags: [uninstall]
+
+- name: 'fetch generated ssh host config to localhost'
+  become: false
+  ansible.builtin.fetch:
+    src: '/home/{{ ansible_user }}/{{ inventory_hostname }}_ssh_host_config'
+    dest: '~/.ssh/config.d/'
+    flat: true
+  when: host_config_block.changed
+  tags: [uninstall]
+
