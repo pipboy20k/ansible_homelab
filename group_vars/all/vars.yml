@@ -21,6 +21,7 @@ shell_dot_files: '/home/{{ username }}/.config/zsh'
 ############
 
 main_network_user_userid: 1000
+ansible_userid:           1001
 
 # network stuff
 #unifi_controller_userid:  1101
