@@ -5,3 +5,4 @@ ansible.cfg
 test*
 playbook*yml
 *playbook.yml
+*99_private_vars.yml
