@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: audiobookshelf
+  author: Sebastian Busse <s.busse@mailbox.org>
+  description: installs the audiobookshelf service within a podman container run by its own user
+  license: license (BSD)
+  min_ansible_version: 2.6
+  platforms:
+   - name: debian # not tested for other systems
+     versions:
+       - all
+
+  galaxy_tags:
+    - deployment
+    - media
+    - audiobooks

@@ -1,0 +1,34 @@
+username: audiobookshelf
+servicename: audiobookshelf
+
+mount_base: '%h/nfs_mounts/'
+
+service_pod:
+  name: '{{ servicename }}'
+  publish_ports:
+    - host: '{{ lookup("vars", username ~"_port") }}'
+      container: 80
+  named_volumes:
+    - name: 'config'
+    - name: 'metadata'
+  nfs_mounts:
+    - name: 'audiobooks'
+      src: 'NAS_IP:path/to/audiobooks'
+      options: 'rw,sync,_netdev,nofail,hard,timeo=600,retrans=3'
+    - name: 'podcasts'
+      src: 'NAS_IP:path/to/podcasts'
+      options: 'rw,sync,_netdev,nofail,hard,timeo=600,retrans=3'
+  containers: 
+    - name: audiobookshelf
+      description: 'container hosting audiobookshelf'
+      image: 'ghcr.io/advplyr/audiobookshelf'
+      tag: 'latest'
+      volumes:
+        - host: '{{ mount_base }}/audiobooks'
+          container: '/audiobooks'
+        - host: '{{ mount_base }}/podcasts'
+          container: '/podcasts'
+        - host: 'config'
+          container: '/config'
+        - host: 'metadata'
+          container: '/metadata'

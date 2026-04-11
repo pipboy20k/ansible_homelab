@@ -1,0 +1,33 @@
+---
+- import_tasks: ../../tasks/apt.yml
+
+- import_tasks: ../../tasks/user_install.yml
+  tags: [install]
+
+- import_tasks: ../../tasks/directories_install.yml
+  tags: [install]
+
+- import_tasks: ../../tasks/quadlets_install.yml
+  tags: [install]
+
+- import_tasks: ../../tasks/motd_install.yml
+  tags: [install]
+
+- import_tasks: ../../tasks/mount.yml
+  tags: [start]
+
+- import_tasks: ../../tasks/quadlets_start.yml
+  tags: [start]
+
+- import_tasks: ../../tasks/umount.yml
+  tags: [never, uninstall]
+
+- import_tasks: ../../tasks/directories_uninstall.yml
+  tags: [never, uninstall]
+
+- import_tasks: ../../tasks/motd_uninstall.yml
+  tags: [never, uninstall]
+
+- import_tasks: ../../tasks/user_uninstall.yml
+  tags: [never, uninstall]
+
