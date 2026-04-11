@@ -59,3 +59,11 @@
   when: service_pod.nfs_mounts is defined
   tags: [uninstall,never]
 
+- name: 'remove {{ username }} from {{ inventory_hostname }}'
+  become: true
+  ansible.builtin.user:
+    name: '{{ username }}'
+    state: absent
+    remove: true
+  tags: [never,uninstall]
+

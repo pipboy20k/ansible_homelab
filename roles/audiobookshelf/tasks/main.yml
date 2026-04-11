@@ -22,6 +22,9 @@
 - import_tasks: ../../tasks/umount.yml
   tags: [never, uninstall]
 
+- import_tasks: ../../tasks/quadlets_uninstall.yml
+  tags: [never, uninstall]
+
 - import_tasks: ../../tasks/directories_uninstall.yml
   tags: [never, uninstall]
 
