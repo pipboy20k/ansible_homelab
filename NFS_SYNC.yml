@@ -1,0 +1,51 @@
+---
+- hosts: my_nas
+  become: true
+  vars:
+    ansible_user: '{{ main_network_user }}'
+  gather_facts: no
+
+  tasks:
+    - name: 'empty /etc/exports.d/'
+      ansible.builtin.file:
+        path: /etc/exports.d/
+        state: '{{ item }}'
+        mode: '0755'
+      loop: [absent, directory]
+
+    - name: 'populate /etc/exports.d/'
+      ansible.builtin.copy:
+        src: '{{ item }}'
+        dest: /etc/exports.d/
+        owner: root
+        group: root
+        mode: '0644'
+      loop: '{{ query("ansible.builtin.fileglob", playbook_dir ~ "/artifacts/EXPORTS/exports.d/*.exports") }}'
+
+    - name: 'add users to mounters group'
+      ansible.builtin.user:
+        name: '{{ u_name }}'
+        state: '{{ u_state }}'
+        uid: '{{ lookup("vars", u_name ~ "_userid") }}'
+        create_home: false
+        groups: [mounters]
+        append: false # we do not want the user to have any groups besides the mounters group
+      loop: '{{ lookup("ansible.builtin.file", playbook_dir ~ "/artifacts/EXPORTS/mounters.catalog").splitlines() | select }}'
+      vars:
+        u_name: '{{ item.split(":")[0] }}'
+        u_state: '{{ item.split(":")[1] | ansible.builtin.trim }}'
+
+    - name: 'update /etc/hosts'
+      ansible.builtin.lineinfile:
+        path: '/etc/hosts'
+        line: '{{ item }}'
+        state: present
+        insertbefore: '# The following lines'
+      loop: '{{ lookup("file", playbook_dir ~ "/artifacts/hosts").splitlines() | select("match", "^10\.") | list }}'
+
+    - name: 'reload nfs-kernel-server'
+      ansible.builtin.systemd_service:
+        daemon-reload: true
+        service: nfs-kernel-server
+        state: restarted
+

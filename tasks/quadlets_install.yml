@@ -1,0 +1,105 @@
+---
+- name: 'create {{ container_path }}'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env}}'
+  ansible.builtin.file:
+    path: '{{ container_path }}'
+    state: directory
+    mode: '0755'
+  tags: [install]
+
+- name: 'create volume quadlets'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env}}'
+  ansible.builtin.template:
+    src: volume.j2
+    dest: '{{ container_path }}/{{ service_pod.name }}_{{ item.name }}.volume'
+    mode: '0644'
+  loop: '{{ service_pod.named_volumes }}'
+  when: service_pod.named_volumes is defined
+  tags: [install]
+
+- name: 'create nfs mount directory'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env }}'
+  ansible.builtin.file:
+    path: '{{ mount_base | replace("%h", "/home/" ~ username) }}'
+    state: 'directory'
+  when: service_pod.nfs_mounts is defined
+  tags: [install]
+
+- name: 'create nfs mount quadlets'
+  become: true
+  ansible.builtin.template:
+    src: mount.j2
+    dest: '/etc/systemd/system/{{ unit_filename }}'
+    mode: '0644'
+  loop: '{{ service_pod.nfs_mounts }}'
+  loop_control:
+    loop_var: nfs_mount
+  vars:
+    full_mount_path: '{{ [mount_base | replace("%h", "/home/" ~ username), nfs_mount.name] | ansible.builtin.path_join }}'
+    unit_filename: '{{ full_mount_path | regex_replace("^/", "") | replace("/", "-")  }}.mount'
+  when: service_pod.nfs_mounts is defined
+  tags: [install]
+
+- name: 'ensure local artifacts/EXPORTS/exports.d/ exists'
+  become: false
+  ansible.builtin.file:
+    path: '{{ playbook_dir }}/artifacts/EXPORTS/exports.d'
+    state: directory
+  delegate_to: localhost
+  when: service_pod.nfs_mounts is defined
+  tags: [install]
+
+- name: 'create nfs mount sync file for playbook NFS_SYNC'
+  become: false
+  ansible.builtin.template:
+    src: exports.j2
+    dest: '{{ playbook_dir }}/artifacts/EXPORTS/exports.d/{{ username }}_on_{{ inventory_hostname }}.exports'
+    mode: '0644'
+  delegate_to: localhost
+  when: service_pod.nfs_mounts is defined
+  tags: [install]
+
+- name: 'create image quadlets'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env}}'
+  ansible.builtin.template:
+    src: image.j2
+    dest: '{{ container_path }}/{{ container.name }}.image'
+    mode: '0644'
+  loop: '{{ service_pod.containers }}'
+  loop_control:
+    loop_var: container
+  when: service_pod.containers is defined
+  tags: [install]
+
+- name: 'create container quadlets'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env}}'
+  ansible.builtin.template:
+    src: container.j2
+    dest: '{{ container_path }}/{{ container.name }}.container'
+    mode: '0644'
+  loop: '{{ service_pod.containers }}'
+  loop_control:
+    loop_var: container
+  when: service_pod.containers is defined
+  tags: [install]
+
+- name: 'create pod quadlet'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env}}'
+  ansible.builtin.template:
+    src: pod.j2
+    dest: '{{ container_path }}/{{ service_pod.name }}.pod'
+    mode: '0644'
+  tags: [install]
+

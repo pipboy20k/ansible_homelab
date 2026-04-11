@@ -1,0 +1,3 @@
+{% for mount in service_pod.nfs_mounts | default([])%}
+{{ mount.src.split(':') | last }} {{ inventory_hostname }}(rw,no_subtree_check)
+{% endfor %}

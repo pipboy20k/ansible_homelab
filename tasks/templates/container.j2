@@ -14,9 +14,8 @@ Environment=TZ={{ environment_TZ }}
 Environment={{ env.key }}={{ env.value }}
 {% endfor %}
 {% for vol in container.volumes | default([])%}
-{% set is_bind_mount = vol.host.startswith('/') or vol.host.startswith('./') %}
+{% set is_bind_mount = vol.host.startswith('/') or vol.host.startswith('%h') %}
 {% set target = vol.host if is_bind_mount else service_pod.name ~ '_' ~ vol.host ~ '.volume' %}
-#Volume={{ vol.host }}:{{ vol.container }}{{ ':' ~ vol.flags if vol.flags is defined }}
 Volume={{ target }}:{{ vol.container }}{{ ':' ~ vol.flags if vol.flags is defined }}
 {% endfor %}
 {% for cap in container.capabilities | default([])%}

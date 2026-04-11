@@ -1,0 +1,14 @@
+[Unit]
+Description=NFS mount unit for {{ nfs_mount.name }}
+Requires=network-online.target
+After=network-online.target
+
+[Mount]
+What={{ nfs_mount.src }}
+Where={{ full_mount_path }}
+Type=nfs4
+Options={{ nfs_mount.options }}
+
+[Install]
+WantedBy=default.target
+

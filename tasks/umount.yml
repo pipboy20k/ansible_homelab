@@ -1,0 +1,16 @@
+---
+- name: 'configure systemd to run pod "{{ service_pod.name }}"'
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    enabled: false
+    state: stopped
+    name: '{{ unit_filename }}'
+  loop: '{{ service_pod.nfs_mounts }}'
+  loop_control:
+    loop_var: nfs_mount
+  vars:
+    full_mount_path: '{{ [mount_base | replace("%h", "/home/" ~ username), nfs_mount.name] | ansible.builtin.path_join }}'
+    unit_filename: '{{ full_mount_path | regex_replace("^/", "") | replace("/", "-")  }}.mount'
+  tags: [uninstall, never]
+

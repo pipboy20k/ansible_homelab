@@ -6,7 +6,7 @@ After=network-online.path
 [Pod]
 PodName={{ service_pod.name }}-stack
 {% for port in service_pod.publish_ports | default([])%}
-PublishPort={{ port.ip ~ ':' if port.ip is defined }}{{ port.host }}:{{ port.container }}{% '/' ~ port.protocol if port.protocol is defined %}
+PublishPort={{ port.ip ~ ':' if port.ip is defined }}{{ port.host }}:{{ port.container }}{{ '/' ~ port.protocol if port.protocol is defined }}
 {% endfor %}
 
 {#

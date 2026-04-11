@@ -22,6 +22,16 @@
   when: pwless_sudo | default(false) | bool
   tags: [install]
 
+- name: 'add user to control-node "mounters" catalog'
+  ansible.builtin.lineinfile:
+    path: '{{ playbook_dir }}/artifacts/EXPORTS/mounters.catalog'
+    regexp: '^{{ username }}:'
+    line: '{{ username }}: present'
+    create: yes
+  delegate_to: localhost
+  when: service_pod.nfs_mounts is defined
+  tags: [install]
+
 - name: 'add user {{ username }} to groups as defined'
   become: true
   ansible.builtin.user:
@@ -97,23 +107,30 @@
   when: dotfiles_repo_cloned.changed
   tags: [install]
 
-- name: 'copy network-online.path for user {{ username }}'
+- name: 'setup network-online.target for user {{ username }}'
   become: true
   become_user: '{{ username }}'
   environment: '{{ become_env }}'
   ansible.builtin.copy:
-    src: network-online.path
+    src: 'network-online.{{ item }}'
     dest: '/home/{{ username }}/.config/systemd/user/'
+  loop:
+    - target
+    - path
   tags: [install]
 
-- name: 'enable network-online.path for user {{ username }}'
+- name: 'enable network-online.target for user {{ username }}'
   become: true
   become_user: '{{ username }}'
   environment: '{{ become_env }}'
   ansible.builtin.systemd:
     daemon_reload: true
-    unit: network-online-path
+    unit: 'network-online.{{ item }}'
     enabled: true
+    scope: user
+  loop:
+    - target
+    - path
   tags: [install]
 
 - name: 'generate / update ssh host config with user {{ username }}'

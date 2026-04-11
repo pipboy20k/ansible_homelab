@@ -23,6 +23,7 @@
     path: /etc/motd
   register: motd_file_status
   changed_when: false
+  tags: [install]
 
 - name: create backup of original message of the day
   become: true

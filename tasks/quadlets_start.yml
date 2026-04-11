@@ -1,0 +1,23 @@
+---
+- name: 'run daemon-reload'
+  become: true
+  become_user: '{{ username }}'
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ userid }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ userid }}/bus'
+  ansible.builtin.systemd_service:
+    scope: 'user'
+    daemon_reload: true
+  tags: [start]
+
+- name: 'configure systemd to run pod "{{ service_pod.name }}"'
+  become: true
+  become_user: '{{ username }}'
+  environment: '{{ become_env }}'
+  ansible.builtin.systemd_service:
+    scope: user
+    daemon_reload: false
+    enabled: true
+    state: started
+    name: '{{ service_pod.name }}-pod.service'
+  tags: [start]

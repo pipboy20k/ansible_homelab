@@ -1,0 +1,10 @@
+[Unit]
+Description=Wait for /var/run/network-online
+
+[Path]
+PathExists=/var/run/network-online
+Unit=network-online.target
+
+[Install]
+WantedBy=default.target
+

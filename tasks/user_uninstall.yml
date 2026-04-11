@@ -9,7 +9,7 @@
     nopassword: true
     state: absent
   when: pwless_sudo | default(false) | bool
-  tags: [uninstall]
+  tags: [uninstall,never]
 
 - name: 'check linger status for user {{ username }}'
   become: true
@@ -22,7 +22,7 @@
   become: true
   ansible.builtin.command: 'loginctl disable-linger {{ username }}'
   when: linger_result.stat.exists
-  tags: [uninstall]
+  tags: [uninstall,never]
 
 - name: 'update ssh host config with user {{ username }}'
   become: false
@@ -38,7 +38,7 @@
     mode: '0644'
     state: absent
   register: host_config_block
-  tags: [uninstall]
+  tags: [uninstall,never]
 
 - name: 'fetch generated ssh host config to localhost'
   become: false
@@ -47,5 +47,15 @@
     dest: '~/.ssh/config.d/'
     flat: true
   when: host_config_block.changed
-  tags: [uninstall]
+  tags: [uninstall,never]
+
+- name: 'remove {{ username }} from control-node mounters.catalog'
+  become: false
+  ansible.builtin.lineinfile:
+    path: '{{ playbook_dir }}/artifacts/EXPORTS/mounters.catalog'
+    regexp: '^{{ username }}'
+    line: '{{ username }}: absent'
+  delegate_to: localhost
+  when: service_pod.nfs_mounts is defined
+  tags: [uninstall,never]
 
