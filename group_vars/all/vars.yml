@@ -34,7 +34,7 @@ mounters_group_id:        1066
 #mosquitto_userid:         1202
 
 # media and other stuff
-#audiobookshelf_userid:    1301
+audiobookshelf_userid:    1301
 #jellyfin_userid:          1302
 #airsonic_userid:          1303
 #navidrome:                1304
@@ -58,7 +58,7 @@ userid: '{{ lookup("vars", username ~ "_userid") }}'
 #mosquitto_port:           8202
 
 # media and other stuff
-#audiobookshelf_port:      8301
+audiobookshelf_port:      8301
 #jellyfin_port:            8302
 #airsonic_port:            8303
 #navidrome:                8304
