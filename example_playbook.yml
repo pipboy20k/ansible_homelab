@@ -5,4 +5,4 @@
 
   roles:
     - role: base_config
-    #- role: audiobookshelf /not yet implemented
+    - role: audiobookshelf
