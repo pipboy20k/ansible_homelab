@@ -1,14 +1,13 @@
 ---
-vars:
-  volumes_flat: '{{ service_pod.containers | default([]) | subelements("volumes", skip_missing=True) }}'
+- name: prep vars
+  ansible.builtin.set_fact:
+    volumes_flat: '{{ service_pod.containers | default([]) | subelements("volumes", skip_missing=True) }}'
+    # if is_file is true, take dirname; otherwise use full path
 
-  # if is_file is true, take dirname; otherwise use full path
-  resolved_path: >-
-      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
-      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
-
-  # create cartesian product: each volume combined with [true, false]
-  cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
+- name: prep cartesian product
+  ansible.builtin.set_fact:
+    # create cartesian product: each volume combined with [true, false]
+    cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
 
 - name: 'create directories for user {{ username }}'
   become: true
@@ -21,6 +20,10 @@ vars:
   loop: '{{ volumes_flat }}'
   loop_control:
     loop_var: volume
+  vars:
+    resolved_path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
   when: >
     volume.1.host is match('^/') or
     volume.1.host is match('^%h/')
@@ -41,6 +44,9 @@ vars:
   loop_control:
     loop_var: loop_item
   vars:
+    resolved_path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
     volume: '{{ loop_item.0 }}'
     acl_type: '{{ loop_item.1 }}'
   when: >

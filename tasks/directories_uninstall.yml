@@ -1,14 +1,13 @@
 ---
-vars:
-  volumes_flat: '{{ service_pod.containers | default([]) | subelements("volumes", skip_missing=True) }}'
+- name: prep volumes_flat var
+  ansible.builtin.set_fact:
+    volumes_flat: '{{ service_pod.containers | default([]) | subelements("volumes", skip_missing=True) }}'
 
-  # if is_file is true, take dirname; otherwise use full path
-  resolved_path: >-
-      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
-      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
 
+- name: prep cartesian product
+  ansible.builtin.set_fact:
   # create cartesian product: each volume combined with [true, false]
-  cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
+    cartesian_product: '{{ volumes_flat | product([true, false]) | list }}'
 
 - name: 'UNINSTALL: unassign default and current ACL for directories outside of /home/{{ username }}'
   become: true
@@ -25,6 +24,10 @@ vars:
   loop_control:
     loop_var: loop_item
   vars:
+    # if is_file is true, take dirname; otherwise use full path
+    resolved_path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
     volume: '{{ loop_item.0 }}'
     acl_type: '{{ loop_item.1 }}'
   when: >
@@ -65,8 +68,12 @@ vars:
 
     # 3. echo both results for registering (stdout = "0|0": may be deleted; "1|0": has 1 ACL remaining, do not delete; "0|1": is a network mount, do not delete)
     echo "$ACL_COUNT|$IS_NFS"
-  vars:
     path: '{{ resolved_path }}'
+  vars:
+    # if is_file is true, take dirname; otherwise use full path
+    path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
   register: safety_check
   failed_when: false
   changed_when: false
@@ -88,6 +95,10 @@ vars:
   loop_control:
     loop_var: res
   vars:
+    # if is_file is true, take dirname; otherwise use full path
+    resolved_path: >-
+      {%- set raw_path = volume.1.host | replace('%h', '/home/' ~ username) -%}
+      {{ (volume.1.is_file | default(false)) | ternary(raw_path | dirname , raw_path) }}
     volume: '{{ res.volume }}'  # needed for resolved_path
     split_results: "{{ res.stdout.split('|') if res.stdout is defined else ['-1', '-1'] }}"
     acl_count: "{{ split_results[0] | trim }}"
