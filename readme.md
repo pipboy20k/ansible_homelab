@@ -22,3 +22,10 @@ Prerequisites:
 2. if needed, update inventory file with new ip
 3. make sure to have the new fingerprint by manually connecting to the host with user ansible
 4. run ansible-playbook -Kk my_playbook.yml (first run with manual password entry, if the playbook includes the role *base_config*, later runs need to be without *-kK*)
+
+
+for roles where nfs_mounts are defined:
+1. run ansible-playbook my_playbook --tags install
+2. run ansible-playbook NFS_SYNC.yml -Kk
+3. run ansible-playbook my_playbook --tags start
+
