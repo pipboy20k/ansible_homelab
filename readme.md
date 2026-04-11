@@ -29,3 +29,5 @@ for roles where nfs_mounts are defined:
 2. run ansible-playbook NFS_SYNC.yml -Kk
 3. run ansible-playbook my_playbook --tags start
 
+make sure, the files to be mounted belong to the group "mounters" on your NFS-server. (must obviously have the same gid as defined in group_vars/all/vars.yml)
+
