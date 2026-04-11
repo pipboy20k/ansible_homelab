@@ -2,7 +2,7 @@ username: USERNAME
 pwless_sudo: false # OPTIONAL
 servicename: NameOfThePod
 
-motd_file: '001_{servicename}.txt'
+mount_base: '%h/nfs_mounts/'
 
 # for now, the tasks are designed with *EITHER* a service_pod *OR* one or more virtual machines per role. Behaviour if both are defined is untested (and will probably remain so)
 
@@ -12,10 +12,17 @@ service_pod:
   publish_ports:
     - host: '{{ lookup("vars", username ~ "_port") }}'
       container: '8000'
-      bind_ip: '127.0.0.1' # OPTIONAL, this way, only the host interface with the ip 127.0.0.1 can access the published port
+      bind_ip: '127.0.0.1' # OPTIONAL and probably UNUSUAL, this way, only the host interface with the ip 127.0.0.1 can access the published port
   named_volumes:
     - name: 'myVolume'
-    - name: 'myOtherVolume'
+  nfs_mounts:
+    - name: 'audiobooks'
+      src: '192.168.0.1:/path/to/audiobooks'
+      options: 'rw,sync,_netdev,nofail,hard,timeo=600,retrans=3'
+    - name: 'podcasts_shelf'
+      src: '192.168.0.1:/path/to/podcasts_shelf'
+      options: 'rw,sync,_netdev,nofail,hard,timeo=600,retrans=3'
+
   containers:
     - name: 'someName'
       description: 'what this container is for within the pod'
@@ -25,6 +32,10 @@ service_pod:
         - host: 'myVolume.volume'
           container: '/usr/src/paperless/consume'
           flags: 'U,z' # OPTIONAL
+        - host: '/mnt/media'
+          container: '/media'
+          permissions: 'rwx' # OPTIONAL
+          flags: 'z' # OPTIONAL
       environment_variables: # OPTIONAL
         - key: 'SOME_OPTION'
           value: 'the_setting'

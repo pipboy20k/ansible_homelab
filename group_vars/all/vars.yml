@@ -23,6 +23,7 @@ shell_dot_files: '/home/{{ username }}/.config/zsh'
 main_network_user_userid: 1000
 ansible_userid:           1001
 
+mounters_group_id:        1066
 # network stuff
 #unifi_controller_userid:  1101
 
