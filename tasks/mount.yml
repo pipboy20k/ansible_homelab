@@ -18,6 +18,6 @@
   vars:
     full_mount_path: '{{ [mount_base | replace("%h", "/home/" ~ username), nfs_mount.name] | ansible.builtin.path_join }}'
     unit_filename: '{{ full_mount_path | regex_replace("^/", "") | replace("/", "-")  }}.mount'
-
+  when: service_pods.nfs_mounts is defined
   tags: [start]
 
